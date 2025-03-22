@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+:root {
+  --main-color: #355079;
+  --main-dark-color: #253956;
+  --gold-color: #a97730;
+  --gold-dark-color: #815b25;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+}
