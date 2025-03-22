@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Importando o hook useNavigate
+import api from "../../services/api";
 import {
   FaEnvelope,
   FaUser,
@@ -11,6 +12,7 @@ import {
 
 const FormCadMembro = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate(); // Inicializando o hook
   const {
     register,
     handleSubmit,
@@ -20,19 +22,45 @@ const FormCadMembro = () => {
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
-      // Simulação de requisição ao backend
       console.log("Enviando dados:", data);
 
-      // Aqui você colocaria sua lógica real de cadastro
-      // await cadastroService(data);
+      // Recuperando o token de autenticação do localStorage
+      const token = localStorage.getItem("authToken");
 
-      // Simular um atraso de processamento
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      if (!token) {
+        alert("Você precisa estar autenticado. Redirecionando para o login...");
+        navigate("/login"); // Redirecionar para a página de login se não houver token
+        return;
+      }
 
-      // Simular resposta após cadastro bem-sucedido
+      // Configurando o cabeçalho de autorização com o token
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`, // Formato comum para tokens JWT
+        },
+      };
+
+      // Usando a instância api centralizada para fazer POST para /member com o token
+      const response = await api.post("/member", data, config);
+
+      console.log("Resposta do servidor:", response.data);
+
+      // Exibir mensagem de sucesso
       alert("Cadastro realizado com sucesso!");
+
+      // Redirecionar após o cadastro
+      navigate("/admin/membros/listar");
     } catch (error) {
-      alert("Erro ao realizar cadastro. Por favor, tente novamente.");
+      // Verificar se o erro é de autenticação (401 Unauthorized)
+      if (error.response && error.response.status === 401) {
+        alert("Sessão expirada ou inválida. Por favor, faça login novamente.");
+        navigate("/login");
+        return;
+      }
+
+      const errorMessage =
+        error.response?.data?.message || "Erro ao realizar cadastro";
+      alert(errorMessage);
       console.error("Erro no cadastro:", error);
     } finally {
       setIsLoading(false);
@@ -71,9 +99,9 @@ const FormCadMembro = () => {
                   <FaUser className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="nome"
+                  id="name"
                   type="text"
-                  {...register("nome", {
+                  {...register("name", {
                     required: "Nome é obrigatório",
                     minLength: {
                       value: 3,
@@ -110,10 +138,6 @@ const FormCadMembro = () => {
                   type="tel"
                   {...register("telefone", {
                     required: "Telefone é obrigatório",
-                    pattern: {
-                      value: /^(?:\(\d{2}\)\s?)?\d{4,5}-?\d{4}$/,
-                      message: "Formato inválido. Use (99) 99999-9999",
-                    },
                   })}
                   className={`appearance-none rounded-lg relative block w-full pl-10 py-3 px-4 border ${
                     errors.telefone ? "border-red-500" : "border-gray-300"
@@ -141,9 +165,9 @@ const FormCadMembro = () => {
                   <FaCalendarAlt className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="dataNascimento"
+                  id="data_nascimento"
                   type="date"
-                  {...register("dataNascimento", {
+                  {...register("data_nascimento", {
                     required: "Data de nascimento é obrigatória",
                   })}
                   className={`appearance-none rounded-lg relative block w-full pl-10 py-3 px-4 border ${
@@ -225,7 +249,7 @@ const FormCadMembro = () => {
             </div>
 
             {/* Campo Gênero (Select) */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label
                 htmlFor="genero"
                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -250,7 +274,7 @@ const FormCadMembro = () => {
                   {errors.genero.message}
                 </p>
               )}
-            </div>
+            </div> */}
 
             {/* Campo Tipo (Membro/Visitante) */}
             <div className="mb-4">

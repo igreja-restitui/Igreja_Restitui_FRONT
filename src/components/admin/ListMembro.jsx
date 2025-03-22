@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, Navigate } from "react-router-dom";
-import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaPhone,
   FaUser,
@@ -12,12 +11,14 @@ import {
   FaEnvelope,
   FaUserFriends,
 } from "react-icons/fa";
+import api from "../../services/api"; // Importa a instância central do axios
 
 const ListMembro = () => {
   // Estado para armazenar a lista de membros
   const [membros, setMembros] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(null);
+  const navigate = useNavigate();
 
   // Estados para busca, filtro e ordenação
   const [busca, setBusca] = useState("");
@@ -28,12 +29,20 @@ const ListMembro = () => {
   const [expandirMembro, setExpandirMembro] = useState(null);
   const [visualizacao, setVisualizacao] = useState("compacta"); // compacta ou detalhada
 
-  // Função para buscar dados da API usando axios
+  // Função para buscar dados da API usando nossa instância configurada
   useEffect(() => {
     const fetchMembros = async () => {
       setCarregando(true);
       try {
-        const response = await axios.get("http://localhost:3000/member");
+        // Verifica se o token está disponível
+        if (!localStorage.getItem("authToken")) {
+          // Se não estiver logado, redireciona para a página de login
+          navigate("/login");
+          return;
+        }
+
+        // Usa a instância api centralizada
+        const response = await api.get("/member");
 
         // Se a resposta for um único objeto, transformamos em array
         const data = response.data;
@@ -58,14 +67,20 @@ const ListMembro = () => {
         setErro(
           "Não foi possível carregar os membros. Por favor, tente novamente mais tarde."
         );
-        Navigate("/");
+
+        // Se o erro for de autenticação, redireciona para o login
+        if (error.response && error.response.status === 401) {
+          navigate("/login");
+        }
       } finally {
         setCarregando(false);
       }
     };
 
     fetchMembros();
-  }, []);
+  }, [navigate]);
+
+  // O resto do código permanece igual...
 
   // Lista de grupos únicos para o filtro (extraídos dos dados)
   const grupos = [...new Set(membros.map((membro) => membro.grupo))];

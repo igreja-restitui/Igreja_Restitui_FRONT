@@ -7,23 +7,47 @@ import {
   FaTimes,
   FaSignOutAlt,
 } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const NavbarAdmin = () => {
-  // Simulação de usuário logado - isso viria do seu contexto de autenticação
-  const usuario = {
-    nome: "João Silva",
-    role: "Administrador",
-  };
-
-  const endereco = "Avenida Vereador José Aleixo, 605 - Jardim Ferri";
-  const mapsUrl = "https://maps.app.goo.gl/SjUQoyAJCkWR5Q6T9";
-
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState({
+    nome: "",
+    role: "",
+  });
   const [membrosDropdownOpen, setMembrosDropdownOpen] = useState(false);
   const [gruposDropdownOpen, setGruposDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Carregar dados do usuário do localStorage
+  useEffect(() => {
+    const loadUserData = () => {
+      const authToken = localStorage.getItem("authToken");
+      const storedUserData = localStorage.getItem("userData");
+
+      if (!authToken) {
+        // Se não houver token, redirecionar para a página de login
+        navigate("/login");
+        return;
+      }
+
+      if (storedUserData) {
+        try {
+          const parsedUserData = JSON.parse(storedUserData);
+          setUserData({
+            nome: parsedUserData.nome || parsedUserData.name || "Usuário",
+            role: parsedUserData.cargo || parsedUserData.role || "Membro",
+          });
+        } catch (error) {
+          console.error("Erro ao processar dados do usuário:", error);
+        }
+      }
+    };
+
+    loadUserData();
+  }, [navigate]);
 
   // Detectar se está em dispositivo móvel
   useEffect(() => {
@@ -38,6 +62,9 @@ const NavbarAdmin = () => {
       window.removeEventListener("resize", checkIfMobile);
     };
   }, []);
+
+  const endereco = "Avenida Vereador José Aleixo, 605 - Jardim Ferri";
+  const mapsUrl = "https://maps.app.goo.gl/SjUQoyAJCkWR5Q6T9";
 
   const toggleMembrosDropdown = () => {
     setMembrosDropdownOpen(!membrosDropdownOpen);
@@ -63,6 +90,14 @@ const NavbarAdmin = () => {
 
   const closeSideMenu = () => {
     setSideMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    // Remover dados do localStorage
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
+    // Redirecionar para a página de login
+    navigate("/login");
   };
 
   return (
@@ -148,12 +183,12 @@ const NavbarAdmin = () => {
               <span
                 className={`${isMobile ? "text-sm" : "text-base"} font-medium`}
               >
-                {usuario.nome}
+                {userData.nome}
               </span>
               <span
                 className={`${isMobile ? "text-xs" : "text-sm"} text-gray-300`}
               >
-                {usuario.role}
+                {userData.role}
               </span>
             </div>
             <FaChevronDown className="ml-1" size={12} />
@@ -161,13 +196,13 @@ const NavbarAdmin = () => {
 
           {userDropdownOpen && (
             <div className="absolute top-full right-0 mt-2 w-36 bg-white shadow-lg rounded-md py-2 z-10">
-              <Link
-                to="/logout"
-                className="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100"
+              <button
+                onClick={handleLogout}
+                className="flex items-center px-4 py-2 text-gray-800 hover:bg-gray-100 w-full text-left"
               >
                 <FaSignOutAlt className="mr-2" />
                 Sair
-              </Link>
+              </button>
             </div>
           )}
         </div>
@@ -197,21 +232,20 @@ const NavbarAdmin = () => {
                 <FaUserCircle size={48} className="text-white mr-4" />
                 <div>
                   <h3 className="text-white font-medium text-lg">
-                    {usuario.nome}
+                    {userData.nome}
                   </h3>
-                  <p className="text-gray-300">{usuario.role}</p>
+                  <p className="text-gray-300">{userData.role}</p>
                 </div>
               </div>
 
               {/* Botão de sair */}
-              <Link
-                to="/logout"
-                className="flex items-center gap-2 text-white hover:text-[var(--gold-color)] transition mt-4 bg-slate-700 p-2 rounded"
-                onClick={closeSideMenu}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-white hover:text-[var(--gold-color)] transition mt-4 bg-slate-700 p-2 rounded w-full"
               >
                 <FaSignOutAlt size={16} />
                 <span>Sair</span>
-              </Link>
+              </button>
             </div>
 
             {/* Itens do menu lateral */}

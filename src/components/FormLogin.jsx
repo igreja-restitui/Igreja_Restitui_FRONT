@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import api from "../services/api"; // Importa a instância central do axios
 
 const FormLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
   const {
     register,
     handleSubmit,
@@ -15,19 +18,30 @@ const FormLogin = () => {
   const onSubmit = async (data) => {
     try {
       setIsLoading(true);
-      // Simulação de requisição ao backend
-      console.log("Enviando dados:", data);
 
-      // Aqui você colocaria sua lógica real de login
-      // await loginService(data.email, data.password);
+      // Usa a instância api centralizada
+      const response = await api.post("/auth", {
+        email: data.email,
+        password: data.password,
+      });
 
-      // Simular um atraso de processamento
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Armazenar o token no localStorage
+      if (response.data.token) {
+        localStorage.setItem("authToken", response.data.token);
 
-      // Simular redirecionamento após login bem-sucedido
-      alert("Login bem-sucedido! Redirecionando...");
+        // Se a API enviar dados do usuário, você também pode armazená-los
+        if (response.data.user) {
+          localStorage.setItem("userData", JSON.stringify(response.data.user));
+        }
+
+        navigate("/admin/membros/listar");
+      } else {
+        throw new Error("Token não recebido do servidor");
+      }
     } catch (error) {
-      alert("Erro ao fazer login. Verifique suas credenciais.");
+      const errorMessage =
+        error.response?.data?.message || "Erro ao fazer login";
+      alert(errorMessage);
       console.error("Erro no login:", error);
     } finally {
       setIsLoading(false);
@@ -42,7 +56,6 @@ const FormLogin = () => {
     <div className="min-h-screen flex items-center justify-center bg-[var(--main-color)] py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div className="text-center">
-          {/* Logo - substitua pelo seu próprio componente ou imagem */}
           <div className="flex justify-center mb-4">
             <img
               src="/images/logo-cor.png"

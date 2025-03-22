@@ -8,6 +8,8 @@ import About from "./pages/About";
 import CadMembro from "./pages/admin/CadMembro";
 import ListMembroPage from "./pages/admin/ListMembro.page";
 import MembroDetail from "./pages/admin/MembroDetail";
+
+import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <>
@@ -16,8 +18,13 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/pix" element={<Doacao />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/admin/membros/cadastrar" element={<CadMembro />} />
-        <Route path="/admin/membros/listar" element={<ListMembroPage />} />
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin/membros/cadastrar" element={<CadMembro />} />
+          <Route path="/admin/membros/listar" element={<ListMembroPage />} />
+          {/* Outras rotas protegidas aqui */}
+        </Route>
+
         <Route path="/admin/membros/:id" element={<MembroDetail />} />
 
         <Route path="*" element={<NotFound />} />
